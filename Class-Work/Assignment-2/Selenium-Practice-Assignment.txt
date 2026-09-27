@@ -1,0 +1,189 @@
+7. Part D — Mini Automation Task (15 marks)
+Write a Selenium script that completes all of the following on a public practice site approved by your instructor:
+•	Open the site and verify the page title.
+•	Locate and interact with at least three different element types.
+•	Use at least two locator strategies.
+•	Use an explicit wait for a meaningful condition.
+•	Capture a screenshot after successful interaction.
+•	Handle one expected failure using exception handling and a useful error message.
+•	Close the session safely even if an error occurs.
+Add comments explaining why each locator and wait strategy was selected. Do not automate login to a real personal account.
+
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+import time
+
+
+
+
+driver = webdriver.Chrome()
+
+# Explicit wait:
+# We use WebDriverWait instead of time.sleep() because Selenium
+# should continue as soon as the required condition is satisfied.
+wait = WebDriverWait(driver, 10)
+
+
+try:
+
+
+
+    driver.get("https://the-internet.herokuapp.com/add_remove_elements/")
+
+    # Verify the page title
+    expected_title = "The Internet"
+
+    if driver.title == expected_title:
+        print("PASS: Page title is correct.")
+    else:
+        print(f"FAIL: Expected '{expected_title}', got '{driver.title}'")
+
+
+
+
+    # CSS Selector is used here because the Add Element button
+    # has a distinctive class and CSS provides a concise locator.
+    add_button = wait.until(
+        EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "button[onclick='addElement()']")
+        )
+    )
+
+    add_button.click()
+
+    print("PASS: Add Element button clicked.")
+
+
+
+
+    # The Delete button appears only after clicking Add Element.
+    # We explicitly wait for it to become visible instead of
+    # assuming it is immediately available.
+    delete_button = wait.until(
+        EC.visibility_of_element_located(
+            (By.CLASS_NAME, "added-manually")
+        )
+    )
+
+    print("PASS: Delete button appeared.")
+
+    delete_button.click()
+
+    print("PASS: Delete button clicked.")
+
+
+
+
+    driver.get("https://the-internet.herokuapp.com/dynamic_controls")
+
+
+   
+
+    # ID is used because "checkbox" is a unique and stable
+    # identifier on this practice page.
+    checkbox = wait.until(
+        EC.presence_of_element_located(
+            (By.ID, "checkbox")
+        )
+    )
+
+    print("PASS: Checkbox located.")
+
+    checkbox.click()
+
+    print("PASS: Checkbox clicked.")
+
+
+
+
+    # XPath is used here to demonstrate a second locator strategy.
+    # We locate the text input based on its type attribute.
+    text_box = wait.until(
+        EC.visibility_of_element_located(
+            (By.XPATH, "//input[@type='text']")
+        )
+    )
+
+    text_box.clear()
+    text_box.send_keys("Selenium with Python")
+
+    print("PASS: Text entered into input field.")
+
+
+
+
+    screenshot_path = "selenium_success.png"
+
+    driver.save_screenshot(screenshot_path)
+
+    print(f"PASS: Screenshot saved as {screenshot_path}")
+
+
+
+
+    try:
+
+        # This element intentionally does NOT exist.
+        # We catch the expected failure rather than allowing
+        # the entire test to crash.
+        missing_element = driver.find_element(
+            By.ID,
+            "element-that-does-not-exist"
+        )
+
+    except NoSuchElementException:
+        print(
+            "EXPECTED FAILURE: Could not find element with ID "
+            "'element-that-does-not-exist'."
+        )
+
+
+except TimeoutException as e:
+
+    print(
+        f"ERROR: Selenium waited 10 seconds but the expected "
+        f"condition was not satisfied.\nDetails: {e}"
+    )
+
+except Exception as e:
+
+    print(f"UNEXPECTED ERROR: {e}")
+
+
+finally:
+
+
+
+    # finally guarantees that the browser is closed even if
+    # an error occurs somewhere inside the try block.
+    driver.quit()
+
+    print("Browser session closed safely.")
+
+
+
+
+R1. Which installation or execution issue required the most reasoning, and how did you isolate its cause?
+
+The issue that required the most reasoning was the `ModuleNotFoundError: No module named 'selenium'` error. I first checked whether the virtual environment was active, which was indicated by `(venv)` in the terminal. I then realized that Selenium had not been installed inside that specific virtual environment. I isolated the cause by running `python -m pip install selenium` and verifying the installation with `python -m pip show selenium`. After that, the Python script was able to import Selenium successfully.
+
+I also encountered a syntax error while trying to locate an Amazon element. I had copied the entire HTML element into `find_element()` and tried to use multiple class names with `By.CLASS_NAME`. I identified that `By.CLASS_NAME` accepts only one class name and changed the locator to a CSS selector, which supports multiple classes.
+
+
+R2. What would you change in your setup to make future Selenium projects easier to reproduce?
+
+For future Selenium projects, I would create a separate Python virtual environment for each project and maintain a `requirements.txt` file containing the required packages and their versions. I would also keep the project structure organized, for example with separate folders for tests, page objects, utilities, and configuration files.
+
+I would use commands such as `python -m pip install -r requirements.txt` to recreate the environment on another computer. I would also keep the Python and Selenium versions documented so that other users can reproduce the same setup more easily.
+
+
+R3. Which source was most useful, and how did you verify that its advice applied to your Selenium version?
+
+The official Selenium documentation was the most useful source because it provides information about WebDriver, locators, waits, and browser automation directly from the Selenium project. I verified that the examples applied to my setup by checking the installed Selenium version using `python -m pip show selenium` and then testing the relevant commands in my Python virtual environment.
+
+I also verified the advice practically by running a simple Selenium script that opened Chrome, navigated to a website, located elements, and interacted with them. This confirmed that the documented Selenium APIs worked correctly in my installed version.
+
